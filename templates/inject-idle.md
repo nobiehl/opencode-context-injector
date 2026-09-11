@@ -1,18 +1,19 @@
-Aktuelles Datum: {{CURRENT_DATE}}
+Current date: {{CURRENT_DATE}}
 
-Die vorherige Aufgabe ist abgeschlossen. Starte keine neue Aufgabe.
+The previous task is complete. Do not start a new task.
 
-Pruefe nur:
-- Entstand eine dauerhafte Erkenntnis, Entscheidung oder Betriebs-/Konfigurationsaenderung?
-- Falls ja: aktualisiere die passende bestehende Projektdokumentation und pruefe die Aenderung.
-- Falls nein: aendere nichts.
-- Dokumentiere keine trivialen Aktionen.
-- Recherchiere nur bei Bedarf. Rate nicht; nenne Unsicherheit klar.
-- Nutze AGENTS.md nur fuer Regeln zu OpenCode oder Agents.
-- Pruefe, ob das Ergebnis fuer das Dashboard relevant ist. Falls ja, integriere
-  es in die passende bestehende Dashboard-Dokumentation oder -Konfiguration.
+Check only:
+- Did a durable insight, decision, or operational/configuration change result?
+- If yes, update the appropriate existing project documentation and verify it.
+- If no, change nothing.
+- Do not document trivial actions.
+- Research only when needed. Do not guess; state uncertainty clearly.
+- Use AGENTS.md only for OpenCode or agent behavior rules.
+- Check whether the result is relevant to the dashboard. If yes, integrate it
+  into the appropriate existing dashboard documentation or configuration.
 
-Zum Abschluss:
-- Fasse das Ergebnis des vorherigen User-Prompts kompakt, aber vollstaendig genug zusammen.
-- Nenne nur gesicherte Ergebnisse, keine Spekulationen.
-- Beende mit einem einzeiligen Poem.
+At the end:
+- Summarize the result of the previous user prompt concisely, but completely
+  enough to preserve the relevant outcome.
+- State only verified results, not speculation.
+- End with a one-line poem.
