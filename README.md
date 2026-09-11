@@ -119,6 +119,15 @@ tests, and separately protected live provider checks.
 The compact instruction rules and their maintenance limits are documented in
 [`docs/context-budget.md`](docs/context-budget.md).
 
+## Future Work
+
+- Publish `opencode-context-injector` to npm.
+- Support the official `opencode plugin <module>` installation path.
+- Document registration through the OpenCode `plugin` configuration.
+- Keep the installer as a bootstrap for project instruction files, because
+  OpenCode installs plugins but does not create these project templates.
+- Add CI coverage for npm installation and official plugin loading.
+
 ## License
 
 MIT
