@@ -35,6 +35,19 @@ injections. The installer warns if it finds either legacy filename.
 Restart OpenCode after installing or changing the plugin. Changes to the two
 project Markdown files are loaded on the next matching event.
 
+## Windows Installation
+
+Run PowerShell from the cloned repository:
+
+```powershell
+Set-ExecutionPolicy -Scope Process Bypass
+.\install.ps1 -ProjectPath C:\path\to\project
+```
+
+The installer uses `OPENCODE_CONFIG_DIR` when set. Otherwise it installs the
+plugin under `%USERPROFILE%\.config\opencode\plugins`, which is OpenCode's
+default configuration path on Windows.
+
 ## Local Development
 
 OpenCode can also load `index.js` directly from a local plugin directory. The
