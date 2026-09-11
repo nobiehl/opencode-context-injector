@@ -53,6 +53,13 @@ default configuration path on Windows.
 OpenCode can also load `index.js` directly from a local plugin directory. The
 package has no runtime dependencies.
 
+## CI Testing Plan
+
+The planned cross-platform CI design is documented in
+[`docs/ci-testing-plan.md`](docs/ci-testing-plan.md). It covers Linux and
+Windows installers, isolated OpenCode smoke checks, local plugin behavior
+tests, and separately protected live provider checks.
+
 ## License
 
 MIT
