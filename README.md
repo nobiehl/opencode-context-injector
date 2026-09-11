@@ -60,6 +60,11 @@ The planned cross-platform CI design is documented in
 Windows installers, isolated OpenCode smoke checks, local plugin behavior
 tests, and separately protected live provider checks.
 
+## Context Budget
+
+The compact instruction rules and their maintenance limits are documented in
+[`docs/context-budget.md`](docs/context-budget.md).
+
 ## License
 
 MIT
