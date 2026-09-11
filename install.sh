@@ -7,6 +7,14 @@ PLUGIN_DIR="${OPENCODE_PLUGIN_DIR:-$HOME/.config/opencode/plugins}"
 PROJECT_DIR="${1:-$PWD}"
 
 mkdir -p "$PLUGIN_DIR" "$PROJECT_DIR/.opencode"
+
+for legacy in inject-user.js inject-idle.js; do
+  if [[ -e "$PLUGIN_DIR/$legacy" ]]; then
+    printf 'WARNUNG: altes Plugin aktiv: %s\n' "$PLUGIN_DIR/$legacy" >&2
+    printf 'Vor dem Neustart deaktivieren, sonst laufen Injektionen doppelt.\n' >&2
+  fi
+done
+
 install -m 644 "$SCRIPT_DIR/index.js" "$PLUGIN_DIR/opencode-context-injector.js"
 
 for template in inject-user.md inject-idle.md; do

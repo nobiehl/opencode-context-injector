@@ -28,6 +28,10 @@ The installer copies the plugin to
 project templates only when they do not already exist. Existing project files
 are preserved.
 
+Do not run the combined plugin together with separate `inject-user.js` or
+`inject-idle.js` plugins. Disable those older plugins first to avoid duplicate
+injections. The installer warns if it finds either legacy filename.
+
 Restart OpenCode after installing or changing the plugin. Changes to the two
 project Markdown files are loaded on the next matching event.
 
