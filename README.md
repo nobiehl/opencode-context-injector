@@ -116,6 +116,10 @@ tests, and separately protected live provider checks.
 
 ## Context Budget
 
+Generated instruction files target no more than approximately 500 tokens for
+`inject-user.md` and 700 tokens for `inject-idle.md`. Exact counts depend on
+the model tokenizer.
+
 The compact instruction rules and their maintenance limits are documented in
 [`docs/context-budget.md`](docs/context-budget.md).
 
