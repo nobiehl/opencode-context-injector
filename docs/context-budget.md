@@ -16,6 +16,16 @@ consume context on every normal prompt and idle follow-up.
 The limits are maintenance targets. The plugin's hard maximum remains 4,000
 characters per instruction file.
 
+## Customization Boundary
+
+The Markdown files contain user-editable prompt instructions. Their wording
+is not enforced by the plugin. Users can replace or empty them for each
+project.
+
+The plugin enforces only the injection mechanics: file lookup, instruction
+length, date expansion, synthetic-message filtering, the `? ` bypass, and the
+optional idle follow-up.
+
 ## Current Templates
 
 The repository templates are the source of truth for the compact rules for

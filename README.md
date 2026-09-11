@@ -11,6 +11,8 @@ Project-file based context injection for OpenCode.
 - `? ` at the beginning bypasses both injection chains and is removed before
   the prompt reaches the model.
 - Empty or missing project files disable the corresponding behavior.
+- The Markdown files are user-editable prompt instructions, not hard-coded
+  policy. Users can replace, customize, or empty them for each project.
 - Instruction files are limited to 4000 characters.
 
 ## Install From GitHub
