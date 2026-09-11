@@ -13,6 +13,8 @@ Project-file based context injection for OpenCode.
 - Empty or missing project files disable the corresponding behavior.
 - The Markdown files are user-editable prompt instructions, not hard-coded
   policy. Users can replace, customize, or empty them for each project.
+- Installs the `/setup-inject-context` project command for generating the two
+  files from verified project information.
 - Instruction files are limited to 4000 characters.
 
 ## Technical Flow
@@ -79,8 +81,12 @@ cd opencode-context-injector
 
 The installer copies the plugin to
 `~/.config/opencode/plugins/opencode-context-injector.js` and creates the two
-project templates only when they do not already exist. Existing project files
-are preserved.
+project templates and the `.opencode/commands/setup-inject-context.md` command
+only when they do not already exist. Existing project files are preserved.
+
+Run `/setup-inject-context` in the installed project to scan relevant project
+files and create missing injection files. Add `--force` to the command
+arguments only when existing injection files should be replaced.
 
 Do not run the combined plugin together with separate `inject-user.js` or
 `inject-idle.js` plugins. Disable those older plugins first to avoid duplicate
@@ -128,8 +134,6 @@ The compact instruction rules and their maintenance limits are documented in
 - Publish `opencode-context-injector` to npm.
 - Support the official `opencode plugin <module>` installation path.
 - Document registration through the OpenCode `plugin` configuration.
-- Add `/setup-inject-context` to scan a project and generate both files within
-  the approximate 500-token user and 700-token idle limits.
 - Keep the installer as a bootstrap for project instruction files, because
   OpenCode installs plugins but does not create these project templates.
 - Add CI coverage for npm installation and official plugin loading.

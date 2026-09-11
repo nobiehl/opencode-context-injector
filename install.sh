@@ -6,7 +6,7 @@ SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 PLUGIN_DIR="${OPENCODE_PLUGIN_DIR:-$HOME/.config/opencode/plugins}"
 PROJECT_DIR="${1:-$PWD}"
 
-mkdir -p "$PLUGIN_DIR" "$PROJECT_DIR/.opencode"
+mkdir -p "$PLUGIN_DIR" "$PROJECT_DIR/.opencode" "$PROJECT_DIR/.opencode/commands"
 
 for legacy in inject-user.js inject-idle.js; do
   if [[ -e "$PLUGIN_DIR/$legacy" ]]; then
@@ -26,6 +26,14 @@ for template in inject-user.md inject-idle.md; do
     printf 'erstellt: %s\n' "$target"
   fi
 done
+
+command_target="$PROJECT_DIR/.opencode/commands/setup-inject-context.md"
+if [[ -e "$command_target" ]]; then
+  printf 'beibehalten: %s\n' "$command_target"
+else
+  install -m 644 "$SCRIPT_DIR/templates/setup-inject-context.md" "$command_target"
+  printf 'erstellt: %s\n' "$command_target"
+fi
 
 printf 'Plugin installiert: %s\n' "$PLUGIN_DIR/opencode-context-injector.js"
 printf 'Projekt: %s\n' "$PROJECT_DIR"

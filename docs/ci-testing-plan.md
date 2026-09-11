@@ -31,8 +31,12 @@ including pull requests from forks.
 - Run the installer against a temporary project directory.
 - Assert that `.opencode/inject-user.md` and `.opencode/inject-idle.md` are
   created when absent.
+- Assert that `.opencode/commands/setup-inject-context.md` is created when
+  absent.
 - Pre-create customized template files and assert that the installers preserve
   them byte-for-byte.
+- Pre-create a customized `setup-inject-context.md` and assert that the
+  installers preserve it byte-for-byte.
 - Create legacy `inject-user.js` and `inject-idle.js` files and assert that the
   installer emits a warning instead of silently creating a duplicate setup.
 
@@ -140,6 +144,8 @@ The CI plan is complete when:
 
 - Pull requests pass all credential-free checks on Linux and Windows.
 - Both installers preserve existing project customizations.
+- The `/setup-inject-context` command is installed and existing command files
+  are preserved.
 - The combined plugin is loaded exactly once.
 - Normal prompts, idle follow-ups, synthetic parts, and `? ` bypasses have
   automated coverage.

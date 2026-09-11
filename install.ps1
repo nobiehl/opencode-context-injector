@@ -13,7 +13,7 @@ $configDir = if ($env:OPENCODE_CONFIG_DIR) {
 $pluginDir = Join-Path $configDir "plugins"
 $projectDir = (Resolve-Path -LiteralPath $ProjectPath).Path
 
-New-Item -ItemType Directory -Force -Path $pluginDir, (Join-Path $projectDir ".opencode") | Out-Null
+New-Item -ItemType Directory -Force -Path $pluginDir, (Join-Path $projectDir ".opencode"), (Join-Path $projectDir ".opencode\commands") | Out-Null
 
 foreach ($legacy in @("inject-user.js", "inject-idle.js")) {
   $legacyPath = Join-Path $pluginDir $legacy
@@ -32,6 +32,14 @@ foreach ($template in @("inject-user.md", "inject-idle.md")) {
     Copy-Item "$scriptDir\templates\$template" $target
     Write-Host "Created: $target"
   }
+}
+
+$commandTarget = Join-Path $projectDir ".opencode\commands\setup-inject-context.md"
+if (Test-Path -LiteralPath $commandTarget) {
+  Write-Host "Preserved: $commandTarget"
+} else {
+  Copy-Item "$scriptDir\templates\setup-inject-context.md" $commandTarget
+  Write-Host "Created: $commandTarget"
 }
 
 Write-Host "Plugin installed: $(Join-Path $pluginDir 'opencode-context-injector.js')"
