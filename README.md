@@ -124,6 +124,8 @@ The compact instruction rules and their maintenance limits are documented in
 - Publish `opencode-context-injector` to npm.
 - Support the official `opencode plugin <module>` installation path.
 - Document registration through the OpenCode `plugin` configuration.
+- Add `/setup-inject-context` to scan a project and generate both files within
+  the approximate 500-token user and 700-token idle limits.
 - Keep the installer as a bootstrap for project instruction files, because
   OpenCode installs plugins but does not create these project templates.
 - Add CI coverage for npm installation and official plugin loading.
