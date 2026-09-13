@@ -85,8 +85,10 @@ project templates and the `.opencode/commands/setup-inject-context.md` command
 only when they do not already exist. Existing project files are preserved.
 
 Run `/setup-inject-context` in the installed project to scan relevant project
-files and create missing injection files. Add `--force` to the command
-arguments only when existing injection files should be replaced.
+files and turn verified project facts into short, actionable guidance for
+normal prompts and durable completion checks. It creates missing injection
+files and preserves existing files. Add `--force` only when existing injection
+files should be replaced.
 
 Do not run the combined plugin together with separate `inject-user.js` or
 `inject-idle.js` plugins. Disable those older plugins first to avoid duplicate
