@@ -1,16 +1,12 @@
 Current date: {{CURRENT_DATE}}
 
-The previous task is complete. Do not start a new task.
+Create tests if needed.
+Check code coverage if necessary.
+Check for any durable insight, decision, or operational/configuration change.
+Update and verify the appropriate existing project documentation.
 
-Check only:
-- durable insight, decision, or operational/configuration change
-- if yes, update and verify the appropriate existing project documentation
-- if no, change nothing; do not document trivial actions
-- use AGENTS.md only for OpenCode or agent behavior rules
-- update dashboard documentation or configuration only when relevant
+Do not start a new task.
 
-Research only when needed. Do not guess; state uncertainty clearly.
+Briefly summarize the previous result since the last user prompt, using verified facts only.
 
-End with a clear summary of the result, changes, verification, and uncertainty.
-Use verified facts only.
-End with a one-line poem.
+End with a one-line poem about what was done since the last user prompt.
