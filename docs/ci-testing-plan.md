@@ -1,6 +1,7 @@
 # CI Testing Plan
 
-Status: planning only. No workflow is enabled by this document.
+Status: planning only. No CI workflow is enabled by this document. Local Node
+tests exist; the broader cross-platform coverage below remains planned.
 
 ## Goals
 
@@ -31,27 +32,38 @@ including pull requests from forks.
 - Run the installer against a temporary project directory.
 - Assert that `.opencode/inject-user.md` and `.opencode/inject-idle.md` are
   created when absent.
-- Assert that `.opencode/commands/setup-inject-context.md` is created when
+- Assert that the global `commands/setup-inject-context.md` is created when
   absent.
 - Pre-create customized template files and assert that the installers preserve
   them byte-for-byte.
-- Pre-create a customized `setup-inject-context.md` and assert that the
-  installers preserve it byte-for-byte.
+- Create a legacy project-local `.opencode/commands/setup-inject-context.md`
+  and assert that the installer emits a warning.
 - Create legacy `inject-user.js` and `inject-idle.js` files and assert that the
   installer emits a warning instead of silently creating a duplicate setup.
 
 ### Tier 2: Plugin Behavior Tests
 
-Use a small local harness with fake OpenCode hook inputs and a fake session
-client. No external model call is needed.
+Use the local Node test command (`npm test`) with fake OpenCode hook inputs and
+a fake session client. No external model call is needed. The current tests
+cover normal system injection, visible-message preservation, the `? ` idle
+bypass, unrestricted instruction size, and optional hook diagnostics; the
+remaining bullets define the planned coverage.
 
-- A normal user message receives the contents of `inject-user.md`.
+- A normal user message remains unchanged while the system transform receives
+  the contents of `inject-user.md`.
+- An idle synthetic prompt does not receive the normal user injection.
 - `{{CURRENT_DATE}}` is replaced with an ISO date at read time.
-- Missing, empty, and overlong instruction files perform no injection.
+- Missing and empty instruction files perform no injection; non-empty files are
+  not rejected by an artificial character limit.
 - Synthetic parts are ignored by the user injection hook.
 - A prompt beginning with `? ` is passed without user instructions and the
   prefix is removed.
 - The same bypass prevents the idle follow-up prompt.
+- An OpenCode `!` shell message receives no user instructions.
+- Shell events and shell-tool execution prevent the next idle follow-up prompt.
+- A slash command receives no user instructions and prevents the next idle
+  follow-up prompt.
+- Generated instruction files contain verified, relevant project context.
 - A normal idle event loads `inject-idle.md` once.
 - The synthetic idle prompt does not trigger another injection.
 - Parallel idle events produce at most one follow-up prompt.
@@ -67,6 +79,9 @@ version.
 - Run `opencode debug config`.
 - Assert that `opencode-context-injector.js` is loaded exactly once.
 - Assert that the project instruction files are present.
+- Optionally enable `OPENCODE_CONTEXT_INJECTOR_DEBUG` and assert that a normal
+  request emits both the message and system-transform diagnostics without
+  exposing instruction text.
 - Run a non-interactive `opencode run` only when a provider is configured for
   the smoke job.
 
@@ -144,8 +159,9 @@ The CI plan is complete when:
 
 - Pull requests pass all credential-free checks on Linux and Windows.
 - Both installers preserve existing project customizations.
-- The `/setup-inject-context` command is installed and existing command files
-  are preserved.
+- The global `/setup-inject-context` command is installed and existing command
+  files are preserved.
+- The two project guidance files are created and existing files are preserved.
 - The combined plugin is loaded exactly once.
 - Normal prompts, idle follow-ups, synthetic parts, and `? ` bypasses have
   automated coverage.

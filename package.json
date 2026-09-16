@@ -12,5 +12,8 @@
     "README.md",
     "LICENSE"
   ],
+  "scripts": {
+    "test": "node --test"
+  },
   "license": "MIT"
 }

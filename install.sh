@@ -3,10 +3,18 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-PLUGIN_DIR="${OPENCODE_PLUGIN_DIR:-$HOME/.config/opencode/plugins}"
+CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
+PLUGIN_DIR="${OPENCODE_PLUGIN_DIR:-$CONFIG_DIR/plugins}"
+COMMAND_DIR="$CONFIG_DIR/commands"
 PROJECT_DIR="${1:-$PWD}"
 
-mkdir -p "$PLUGIN_DIR" "$PROJECT_DIR/.opencode" "$PROJECT_DIR/.opencode/commands"
+mkdir -p "$PLUGIN_DIR" "$COMMAND_DIR" "$PROJECT_DIR/.opencode"
+
+legacy_project_command="$PROJECT_DIR/.opencode/commands/setup-inject-context.md"
+if [[ -e "$legacy_project_command" ]]; then
+  printf 'WARNUNG: altes projektlokales Setup-Command gefunden: %s\n' "$legacy_project_command" >&2
+  printf 'Das aktuelle Command wird global installiert; die alte Datei bitte entfernen.\n' >&2
+fi
 
 for legacy in inject-user.js inject-idle.js; do
   if [[ -e "$PLUGIN_DIR/$legacy" ]]; then
@@ -27,7 +35,7 @@ for template in inject-user.md inject-idle.md; do
   fi
 done
 
-command_target="$PROJECT_DIR/.opencode/commands/setup-inject-context.md"
+command_target="$COMMAND_DIR/setup-inject-context.md"
 if [[ -e "$command_target" ]]; then
   printf 'beibehalten: %s\n' "$command_target"
 else

@@ -1,54 +1,67 @@
 ---
-description: Scan the project and create concise context injection files
+description: Install or restore the project context templates
 ---
-
-Set up project-specific OpenCode context injection files.
 
 Arguments: $ARGUMENTS
 
-## Inspect
+Copy the two original context templates into the current project:
 
-1. Inspect the project before changing files. Read relevant project guidance,
-   README files, package manifests, build files, and existing documentation.
-   Use `AGENTS.md` only for OpenCode or agent behavior rules.
-2. Exclude `.env*`, credentials, private keys, tokens, `.git`, dependency
-   directories, build output, and other secret or generated content.
-3. Build a private inventory of verified facts: project purpose, languages and
-   frameworks, important directories, normal development commands, tests,
-   deployment or operations guidance, and documentation conventions.
+- `.opencode/inject-user.md`
+- `.opencode/inject-idle.md`
 
-## Derive
+Do not inspect the project and do not make project-specific changes. These files
+are starting points that the project user can edit directly.
 
-Translate the inventory into actionable instructions. Do not copy a project
-summary or large documentation blocks into the prompt files.
+Without `--force`, create only missing files and preserve existing files. With
+`--force`, restore both files exactly to the original template content below.
+Report which files were created, preserved, or restored.
 
-- `inject-user.md` contains only durable project guidance for normal prompts:
-  where to look before changing code, project-specific conventions, required
-  validation commands, and important operational boundaries.
-- `inject-idle.md` contains only durable completion guidance: which project
-  documentation or configuration must be updated after a lasting change, how
-  to verify it, and whether an existing dashboard is relevant.
-- Include a rule only when it changes how the agent should work in this
-  project. Do not invent rules when the project provides no evidence.
-- Preserve the general behavior of the existing templates: research current
-  external facts when needed, inspect project code for code questions, do not
-  guess, state uncertainty, use the current date to verify freshness, answer
-  concisely, and report verified results.
+Explain to the project user:
 
-## Write
+- `inject-user.md` applies to normal requests and should contain concise rules
+  for research, code inspection, verification, uncertainty, and answer style.
+- `inject-idle.md` applies after idle and should contain rules for durable
+  documentation or configuration changes and a clear final summary.
+- Do not put secrets, credentials, unsupported claims, or large project
+  documentation copies into either file.
 
-1. Create `.opencode/inject-user.md` and `.opencode/inject-idle.md`.
-2. If either target exists, preserve it unless `$ARGUMENTS` contains `--force`.
-   Without `--force`, report the existing file and do not replace it.
-3. Keep `inject-user.md` at approximately 500 tokens or fewer and
-   `inject-idle.md` at approximately 700 tokens or fewer. Remove repetition
-   before removing actionable project guidance.
-4. Include `{{CURRENT_DATE}}` when a date is useful. Never hard-code today's
-   date.
+Original `inject-user.md`:
 
-## Verify
+```markdown
+-------------------------------------------------------------------------------
+Current date: {{CURRENT_DATE}}
 
-After writing, inspect both files again. Check that they contain no secrets,
-only verified project-specific guidance, the date placeholder where needed,
-and no duplicated documentation. Report the sources inspected, files created
-or preserved, estimated sizes, and any uncertainty.
+Research only when needed:
+- external, version-dependent, or fast-changing facts
+- source-code questions: inspect the relevant project code
+- use the internet, documentation, codebase, or shell as needed
+- use the date to verify information is current
+
+Do not guess. State uncertainty clearly.
+
+Answer briefly, directly, and in simple language. State verified facts only.
+End with a one-line poem.
+
+-------------------------------------------------------------------------------
+```
+
+Original `inject-idle.md`:
+
+```markdown
+Current date: {{CURRENT_DATE}}
+
+The previous task is complete. Do not start a new task.
+
+Check only:
+- durable insight, decision, or operational/configuration change
+- if yes, update and verify the appropriate existing project documentation
+- if no, change nothing; do not document trivial actions
+- use AGENTS.md only for OpenCode or agent behavior rules
+- update dashboard documentation or configuration only when relevant
+
+Research only when needed. Do not guess; state uncertainty clearly.
+
+End with a clear summary of the result, changes, verification, and uncertainty.
+Use verified facts only.
+End with a one-line poem.
+```

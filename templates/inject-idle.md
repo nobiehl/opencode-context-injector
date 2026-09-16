@@ -11,5 +11,6 @@ Check only:
 
 Research only when needed. Do not guess; state uncertainty clearly.
 
-Summarize the previous result briefly using verified facts only.
+End with a clear summary of the result, changes, verification, and uncertainty.
+Use verified facts only.
 End with a one-line poem.

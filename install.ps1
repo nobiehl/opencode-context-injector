@@ -11,9 +11,15 @@ $configDir = if ($env:OPENCODE_CONFIG_DIR) {
   Join-Path $HOME ".config\opencode"
 }
 $pluginDir = Join-Path $configDir "plugins"
+$commandDir = Join-Path $configDir "commands"
 $projectDir = (Resolve-Path -LiteralPath $ProjectPath).Path
 
-New-Item -ItemType Directory -Force -Path $pluginDir, (Join-Path $projectDir ".opencode"), (Join-Path $projectDir ".opencode\commands") | Out-Null
+New-Item -ItemType Directory -Force -Path $pluginDir, $commandDir, (Join-Path $projectDir ".opencode") | Out-Null
+
+$legacyProjectCommand = Join-Path $projectDir ".opencode\commands\setup-inject-context.md"
+if (Test-Path -LiteralPath $legacyProjectCommand) {
+  Write-Warning "Legacy project-local setup command found: $legacyProjectCommand. The current command is installed globally; remove the old file."
+}
 
 foreach ($legacy in @("inject-user.js", "inject-idle.js")) {
   $legacyPath = Join-Path $pluginDir $legacy
@@ -34,7 +40,7 @@ foreach ($template in @("inject-user.md", "inject-idle.md")) {
   }
 }
 
-$commandTarget = Join-Path $projectDir ".opencode\commands\setup-inject-context.md"
+$commandTarget = Join-Path $commandDir "setup-inject-context.md"
 if (Test-Path -LiteralPath $commandTarget) {
   Write-Host "Preserved: $commandTarget"
 } else {
