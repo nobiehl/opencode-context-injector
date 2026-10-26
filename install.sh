@@ -3,7 +3,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
-CONFIG_DIR="${OPENCODE_CONFIG_DIR:-$HOME/.config/opencode}"
+CONFIG_DIR="${OPENCODE_CONFIG_DIR:-${XDG_CONFIG_HOME:-$HOME/.config}/opencode}"
 PLUGIN_DIR="${OPENCODE_PLUGIN_DIR:-$CONFIG_DIR/plugins}"
 COMMAND_DIR="$CONFIG_DIR/commands"
 PROJECT_DIR="${1:-$PWD}"
@@ -19,7 +19,7 @@ fi
 for legacy in inject-user.js inject-idle.js; do
   if [[ -e "$PLUGIN_DIR/$legacy" ]]; then
     printf 'WARNUNG: altes Plugin aktiv: %s\n' "$PLUGIN_DIR/$legacy" >&2
-    printf 'Vor dem Neustart deaktivieren, sonst laufen Injektionen doppelt.\n' >&2
+    printf 'Deaktivieren, sonst laufen Injektionen doppelt.\n' >&2
   fi
 done
 
@@ -45,4 +45,4 @@ fi
 
 printf 'Plugin installiert: %s\n' "$PLUGIN_DIR/opencode-context-injector.js"
 printf 'Projekt: %s\n' "$PROJECT_DIR"
-printf 'Danach OpenCode neu starten.\n'
+printf 'OpenCode V2 lädt überwachte Plugins automatisch neu. Bei Bedarf /reload verwenden.\n'

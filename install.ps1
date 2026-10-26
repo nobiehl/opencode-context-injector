@@ -7,6 +7,8 @@ $ErrorActionPreference = "Stop"
 $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 $configDir = if ($env:OPENCODE_CONFIG_DIR) {
   $env:OPENCODE_CONFIG_DIR
+} elseif ($env:XDG_CONFIG_HOME) {
+  Join-Path $env:XDG_CONFIG_HOME "opencode"
 } else {
   Join-Path $HOME ".config\opencode"
 }
@@ -24,7 +26,7 @@ if (Test-Path -LiteralPath $legacyProjectCommand) {
 foreach ($legacy in @("inject-user.js", "inject-idle.js")) {
   $legacyPath = Join-Path $pluginDir $legacy
   if (Test-Path -LiteralPath $legacyPath) {
-    Write-Warning "Legacy plugin found: $legacyPath. Disable it before restarting to avoid duplicate injections."
+    Write-Warning "Legacy plugin found: $legacyPath. Disable it to avoid duplicate injections."
   }
 }
 
@@ -50,4 +52,4 @@ if (Test-Path -LiteralPath $commandTarget) {
 
 Write-Host "Plugin installed: $(Join-Path $pluginDir 'opencode-context-injector.js')"
 Write-Host "Project: $projectDir"
-Write-Host "Restart OpenCode after installation."
+Write-Host "OpenCode V2 reloads watched plugins automatically. Use /reload to force a reload."

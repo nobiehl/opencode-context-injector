@@ -1,124 +1,86 @@
 # OpenCode Context Injector
 
-Project-file based context injection for OpenCode.
+Project-file based context injection for **OpenCode V2**. Tested against OpenCode
+and the plugin API **2.1.4**. Version 0.2.0 no longer supports the V1 plugin API.
+
+**Migration status: incomplete.** V1 automatically excluded slash commands from
+both injection chains. That behavior is not yet preserved in this V2 port. The
+explicit bypass below is not an equivalent replacement, and passing hook and
+plugin-loading tests does not establish full V1 behavior parity. Do not release
+this migration as complete until automatic command exclusion is restored and
+tested through actual command execution.
 
 ## Features
 
-- Injects `.opencode/inject-user.md` into the system prompt for normal user
-  requests.
-- Runs `.opencode/inject-idle.md` once after a session becomes idle.
-- Replaces `{{CURRENT_DATE}}` when an instruction file is read.
-- Ignores synthetic idle messages to prevent cross-injection.
-- Skips both injection chains for OpenCode `!` shell commands and slash
-  commands.
-- `? ` at the beginning bypasses both injection chains and is removed before
-  the prompt reaches the model.
-- Empty or missing project files disable the corresponding behavior.
-- The Markdown files are user-editable prompt instructions, not hard-coded
-  policy. Users can replace, customize, or empty them for each project.
-- Installs the global `/setup-inject-context` command for copying or restoring
-  the two original project templates.
+- Adds `.opencode/inject-user.md` to the structured system prompt for normal
+  requests, without rewriting visible user text.
+- Queues `.opencode/inject-idle.md` once after a successful normal turn.
+- Replaces `{{CURRENT_DATE}}` with the current UTC date at injection time.
+- `? ` at the beginning bypasses both chains and is removed from the prompt.
+- Synthetic inputs and OpenCode `!` shell messages receive neither injection.
+- Model shell-tool calls suppress the idle follow-up, but keep user guidance
+  during the normal task.
+- Missing or empty files disable the corresponding behavior. There is no
+  artificial character or token limit.
+- Installs the global `/setup-inject-context` command to copy or restore the
+  original project templates, preserving customizations unless `--force` is used.
+- No runtime dependencies or build step; the installed plugin is one JS file.
 
-## Technical Flow
+The Markdown files are fully user-editable instructions, not hard-coded policy.
+Keep secrets and large documentation copies out of them.
 
-The plugin registers five OpenCode hooks. It checks the worktree and project
-directory in that order and uses the first valid instruction file it finds.
-Files are read when the matching hook runs, so date placeholders and file
-changes use the current content.
+## V2 Technical Flow
 
-The system prompt hook is available in OpenCode `v1.18.31` and later. The
-plugin does not append the user instructions to visible chat text, so older
-OpenCode versions that do not call this hook cannot provide user injection.
+The default export has a stable `id` and `setup(ctx)`. It registers the V2
+`session.prompt`, `session.context`, and `tool.execute.before` hooks and consumes
+the public event stream. It does not return V1 hook objects.
 
-```mermaid
-flowchart TD
-    A[OpenCode event] --> B{chat.message?}
-    B -- yes --> C{Real text part?}
-    C -- no --> Z[Ignore event]
-    C -- yes --> D{Bypass prefix present?}
-    D -- yes --> E[Remove prefix and mark session bypass]
-    E --> F[Skip the next idle follow-up]
-    D -- no --> G[Mark session for system injection]
-    G --> H{system.transform hook?}
-    H -- no --> Z
-    H -- yes --> I[Load inject-user.md]
-    I --> J{File exists and is non-empty?}
-    J -- no --> Z
-    J -- yes --> Q[Add instructions to system prompt]
+1. **Admission:** the prompt hook removes `? ` and persists its bypass decision
+   in message metadata. Attachment mention offsets are updated when text shifts.
+2. **Model context:** the context hook reads the latest delivered user,
+   synthetic, or shell input. Pending prompts cannot change the bypass decision
+   for the active turn. User instructions become `{ type: "text", text }` system
+  parts, including on tool-driven continuations; duplicate parts are avoided.
+   A running instance retains the verified turn decision across compaction. If
+   a reload leaves no original input in the active context, it conservatively
+   skips injection rather than guessing the lost bypass state.
+3. **Idle:** `session.status` events with `data.status.type === "idle"` trigger a
+   follow-up only for a tracked, successfully completed normal turn. Failed,
+   interrupted, bypassed, synthetic, and shell turns do not start follow-ups.
+4. **Follow-up admission:** `ctx.session.synthetic` admits a synthetic input
+   using `delivery: "queue"`, so it does not steer or interrupt newer work.
+   Its ID is derived from the originating input. Repeated idle events cannot
+   start a loop; failed admission can retry with the same ID.
+5. **Lifecycle:** events from other locations are ignored. Deleted, archived,
+   and moved sessions release their state. Unloading aborts the event stream,
+   cancels reconnect timers, and clears file and session caches.
 
-    A --> R{session.status idle?}
-    R -- no --> Z
-    R -- yes --> K{Session busy, skipped, or bypassed?}
-    K -- yes --> L[Ignore or clear session state]
-    K -- no --> M[Load inject-idle.md]
-    M --> N{File exists and is non-empty?}
-    N -- no --> Z
-    N -- yes --> O[Send one synthetic idle prompt]
-    O --> P[Mark next synthetic idle event as skipped]
-    P --> Z
+Files are resolved from `ctx.location.directory` first, then
+`ctx.location.project.directory`. Non-empty local files override root files.
+Contents are cached by modification time, change time, and size; each injection
+checks for edits and expands the date again.
+
+### Slash Commands: V2 Migration Boundary
+
+V2 has **no global `command.execute.before` hook**. A command that submits a
+normal prompt without origin metadata is indistinguishable from user input.
+Unlike V1, arbitrary slash commands therefore cannot be automatically excluded.
+Command authors can explicitly bypass both chains:
+
+```js
+await ctx.session.prompt({
+  sessionID,
+  text: commandText,
+  metadata: { injectContextBypass: true },
+})
 ```
 
-### User Messages
-
-For a normal message, the plugin finds the first non-synthetic text part and
-marks the session for system injection. The system hook then adds the expanded
-contents of `inject-user.md` without changing visible user text. If no valid
-file is found, the request remains unchanged. The `? ` prefix removes itself
-from the message and prevents the idle follow-up for that session cycle.
-OpenCode shell messages beginning with `!` remain unchanged and suppress the
-next idle follow-up. Slash commands are marked before execution and receive neither
-injection. A normal request to run a command is still a regular model prompt.
-
-### Idle Follow-up
-
-When a session becomes idle, the plugin loads `inject-idle.md` and sends it as
-one synthetic prompt. Shell activity, slash commands, and the `? ` bypass
-suppress the next idle follow-up. Session state prevents parallel follow-ups and
-skips the idle event generated by a synthetic prompt. A failed prompt clears the
-state so a later idle event can retry.
-
-### Configuration Boundary
-
-The Markdown files define the prompt content and are fully user-editable. The
-plugin controls only lookup, date expansion, bypass handling,
-synthetic-message filtering, and idle state management.
-
-## Project Guidance
-
-The repository templates are references for short, precise project guidance.
-The installer creates `.opencode/inject-user.md` and
-`.opencode/inject-idle.md`; edit them directly for each project.
-
-The global `/setup-inject-context` command only copies the original templates.
-It does not inspect the project or create project-specific guidance. Without
-`--force`, existing files are preserved. With `--force`, both files are
-restored to the original template content. The command also explains what each
-file is for and which content should not be added.
-
-### Normal Requests
-
-Use `templates/inject-user.md` as the baseline:
-
-- Research external, version-dependent, or fast-changing facts only when needed.
-- Inspect relevant project code for source-code questions.
-- Use current documentation or tools when verification is needed.
-- Do not guess; state uncertainty clearly.
-- Answer directly, simply, and using verified facts.
-
-### Idle Follow-Up
-
-Use `templates/inject-idle.md` as the baseline:
-
-- Treat the previous task as complete and do not start a new task.
-- Check only for durable insights, decisions, or operational changes.
-- Update and verify existing project documentation when a durable change exists.
-- Do not document trivial actions or invent dashboard updates.
-- End with a clear summary of the result, changes, verification, and uncertainty.
-- Use verified facts only and end with a one-line poem.
+For ordinary user prompts, use `? ` as before. This prefix applies to the text
+received by the prompt hook, not necessarily to a slash command's arguments:
+templates may insert other text before those arguments. Client-only commands
+that submit no model prompt do not trigger injection.
 
 ## Install From GitHub
-
-Clone the repository and run the installer for a project:
 
 ```bash
 git clone https://github.com/nobiehl/opencode-context-injector.git
@@ -126,85 +88,99 @@ cd opencode-context-injector
 ./install.sh /path/to/project
 ```
 
-The installer copies the plugin to
-`~/.config/opencode/plugins/opencode-context-injector.js`, installs the global
-`/setup-inject-context` command to `~/.config/opencode/commands/`, and creates
-the two project templates only when they do not already exist. Existing files
-are preserved. Set `OPENCODE_CONFIG_DIR` to use another user-level OpenCode
-configuration directory. On Unix, `OPENCODE_PLUGIN_DIR` can override the
-plugin directory independently.
-
-Do not run the combined plugin together with separate `inject-user.js` or
-`inject-idle.js` plugins. Disable those older plugins first to avoid duplicate
-injections. The installer warns if it finds either legacy filename.
-
-If an older installation left a project-local
-`.opencode/commands/setup-inject-context.md`, the installer warns about it.
-Remove that old project-local copy; the current command belongs in the global
-OpenCode commands directory.
-
-Restart OpenCode after installing or changing the plugin. Changes to the two
-project Markdown files are loaded on the next matching event.
-
-### Hook Diagnostics
-
-Hook diagnostics are disabled by default. To verify hook execution without
-logging instruction contents, set `OPENCODE_CONTEXT_INJECTOR_DEBUG=1` and start
-OpenCode with `--print-logs`:
+On Windows, run PowerShell from the repository:
 
 ```powershell
-$env:OPENCODE_CONTEXT_INJECTOR_DEBUG = "1"
-opencode --print-logs
-```
-
-The plugin logs the session ID, hook names, whether system injection was
-marked, and the injected character count through OpenCode's structured logger.
-It does not log the instruction text. Restart OpenCode after changing the
-environment variable.
-
-## Windows Installation
-
-Run PowerShell from the cloned repository:
-
-```powershell
-Set-ExecutionPolicy -Scope Process Bypass
 .\install.ps1 -ProjectPath C:\path\to\project
 ```
 
-The installer uses `OPENCODE_CONFIG_DIR` when set. Otherwise it installs the
-plugin under `%USERPROFILE%\.config\opencode\plugins` and the command under
-`%USERPROFILE%\.config\opencode\commands`, which are OpenCode's default
-user-level paths on Windows.
+The installer copies the plugin to:
 
-## Local Development
+```text
+~/.config/opencode/plugins/opencode-context-injector.js
+```
 
-OpenCode can also load `index.js` directly from a local plugin directory. The
-package has no runtime dependencies.
+On Windows this is normally
+`C:\Users\<user>\.config\opencode\plugins\opencode-context-injector.js`.
+Both installers respect `XDG_CONFIG_HOME`; `OPENCODE_CONFIG_DIR` overrides it.
+The Unix installer also
+supports `OPENCODE_PLUGIN_DIR` to override the plugin directory independently.
 
-## CI Testing Plan
+The installer preserves existing project instruction files and the global
+`commands/setup-inject-context.md` command. It warns about legacy `inject-user.js`,
+`inject-idle.js`, or a project-local setup command. Disable duplicate plugins;
+do not install the same plugin through both auto-discovery and configuration.
 
-The planned cross-platform CI design is documented in
-[`docs/ci-testing-plan.md`](docs/ci-testing-plan.md). It covers Linux and
-Windows installers, isolated OpenCode smoke checks, local plugin behavior
-tests, and separately protected live provider checks.
+OpenCode V2 reloads watched plugins automatically. Use `/reload` to force a
+reload, then confirm the plugin ID with `opencode plugin list`.
 
-## Context Budget
+### Load a Checkout Directly
 
-Generated `inject-user.md` and `inject-idle.md` files should contain verified,
-project-specific context relevant to their respective injection points. There
-is no enforced token or character limit.
+Configured local plugin paths must be **directories**, not JS filenames. Add
+the checkout to the applicable `opencode.json(c)` instead of copying the file:
 
-The instruction guidance and context considerations are documented in
-[`docs/context-budget.md`](docs/context-budget.md).
+```jsonc
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugins": ["C:/path/to/opencode-context-injector"]
+}
+```
 
-## Future Work
+The checkout loads through its `index.js` default export. The installer remains
+useful for bootstrapping project templates. Package publishing is not yet enabled.
 
-- Publish `opencode-context-injector` to npm.
-- Support the official `opencode plugin <module>` installation path.
-- Document registration through the OpenCode `plugin` configuration.
-- Keep the installer as a bootstrap for project instruction files, because
-  OpenCode installs plugins but does not create these project templates.
-- Add CI coverage for npm installation and official plugin loading.
+## Project Guidance
+
+`/setup-inject-context` copies the original templates; it does not analyze your
+project. Edit `.opencode/inject-user.md` and `.opencode/inject-idle.md` directly.
+Without `--force`, existing files are preserved; `--force` restores both originals.
+
+- **Normal requests:** research only when needed, inspect relevant code, verify
+  current facts, state uncertainty, and answer directly.
+- **Idle follow-up:** treat the task as complete; check only for durable insights,
+  decisions, or operational changes. Update existing documentation only when
+  warranted. Do not start a new task or record trivial actions.
+
+See [`docs/context-budget.md`](docs/context-budget.md) for context guidance.
+
+## Diagnostics
+
+Logging is off by default. Enable `OPENCODE_CONTEXT_INJECTOR_DEBUG=1` in the
+**server's environment**, or configure `{ "package": "/path/to/checkout",
+"options": { "debug": true } }`. In shared-service mode, changing a variable only
+in a new client terminal does not change the already running server environment.
+
+The plugin uses V2 console logging, not the removed V1 `client.app.log` API. Debug
+entries include hook names, session IDs, and character counts, never instruction
+contents. File, admission, and subscription failures emit concise warnings.
+
+## Development and Verification
+
+Use Node.js 22 or newer:
+
+```bash
+npm ci
+npm run check
+npm test
+```
+
+`npm run check` validates the JS implementation against the released V2 plugin
+types. Runtime installation does not need these development dependencies.
+Tests cover hooks, queue-aware bypasses, one-shot idle admission, cleanup,
+location isolation, shell suppression, file updates, and installer preservation.
+
+Opt into the isolated real-OpenCode loading test when `opencode` is on `PATH`:
+
+```powershell
+$env:OPENCODE_SMOKE = "1"
+npm test
+```
+
+The smoke test uses `opencode serve --stdio` with a private authenticated server
+and temporary config/data directories. It
+makes no model requests and does not modify your real OpenCode installation.
+Cross-platform CI and protected live-provider testing remain planned in
+[`docs/ci-testing-plan.md`](docs/ci-testing-plan.md).
 
 ## License
 

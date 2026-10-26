@@ -1,7 +1,8 @@
 # CI Testing Plan
 
-Status: planning only. No CI workflow is enabled by this document. Local Node
-tests exist; the broader cross-platform coverage below remains planned.
+Status: no CI workflow is enabled by this document. Local V2 hook tests,
+cross-platform installer tests, and an opt-in isolated plugin activation smoke
+test exist. The broader CI matrix and live-provider coverage remain planned.
 
 ## Goals
 
@@ -43,11 +44,12 @@ including pull requests from forks.
 
 ### Tier 2: Plugin Behavior Tests
 
-Use the local Node test command (`npm test`) with fake OpenCode hook inputs and
-a fake session client. No external model call is needed. The current tests
-cover normal system injection, visible-message preservation, the `? ` idle
-bypass, unrestricted instruction size, and optional hook diagnostics; the
-remaining bullets define the planned coverage.
+Use `npm run check` to validate the implementation against the OpenCode 2.1.4
+plugin types, and `npm test` with fake V2 domain hooks and a public event stream.
+No external model call is needed. Current tests cover queue-aware bypass,
+structured system injection, one-shot synthetic admission, retry, file caching,
+date expansion, cleanup, stream reconnection, shell suppression, location
+isolation, and optional diagnostics.
 
 - A normal user message remains unchanged while the system transform receives
   the contents of `inject-user.md`.
@@ -61,8 +63,8 @@ remaining bullets define the planned coverage.
 - The same bypass prevents the idle follow-up prompt.
 - An OpenCode `!` shell message receives no user instructions.
 - Shell events and shell-tool execution prevent the next idle follow-up prompt.
-- A slash command receives no user instructions and prevents the next idle
-  follow-up prompt.
+- A command that explicitly sets `metadata.injectContextBypass` receives neither
+  injection. V2 cannot identify arbitrary slash commands globally; see README.
 - Generated instruction files contain verified, relevant project context.
 - A normal idle event loads `inject-idle.md` once.
 - The synthetic idle prompt does not trigger another injection.
@@ -76,11 +78,12 @@ version.
 
 - Verify `opencode --version`.
 - Install the plugin into the global OpenCode plugin directory.
-- Run `opencode debug config`.
-- Assert that `opencode-context-injector.js` is loaded exactly once.
+- Run `opencode api --standalone get /api/plugin` in isolated config/data paths.
+- Assert that the plugin ID `opencode-context-injector` appears exactly once and
+  reports `state.status === "active"`.
 - Assert that the project instruction files are present.
 - Optionally enable `OPENCODE_CONTEXT_INJECTOR_DEBUG` and assert that a normal
-  request emits both the message and system-transform diagnostics without
+  request emits V2 context-hook diagnostics without
   exposing instruction text.
 - Run a non-interactive `opencode run` only when a provider is configured for
   the smoke job.
